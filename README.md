@@ -1,101 +1,38 @@
-# H4 Zone Retest EA (MQL5)
+# blackXAU | MT5 code and price-action research
 
-An automated trading Expert Advisor (EA) for MetaTrader 5, developed in MQL5.  
-The EA trades gold (XAUUSD) using a multi-timeframe breakout and retest strategy: it defines the first H4 candle of each day as a trading zone, detects breakouts on the M5 chart, waits for a retest, and executes trades with risk management, trailing stops, and optional news filtering.
+This is a public **implementation portfolio**, not an audited performance track record. The original H4/M5 EA remains at `blackXAU2.mq5`. It now includes safety guardrails and reproducibility guidance. Historical screenshots from the 2025 README are available in [Git history](https://github.com/feliciien/blackXAU_AUTOMATED-BOT-TRADE/blob/be74ebe2c4ba4f41c8a6a1a899ec73b8d63668f0/README.md), but they are **not** proof of this revised build's performance.
 
----
+## Source
 
-## Features
+- [blackXAU2.mq5](blackXAU2.mq5) — H4/daily zone breakout, M5 retest, H1 EMA / ATR options, broker position sizing, limited calendar filter, session controls and trailing stops.
+- [Research/FibonacciStudy.mq5](Research/FibonacciStudy.mq5) — independent original MQL5 EA example that detects confirmed pivots and research-only Fib retracement signals; it never sends orders.
+- [Validation plan](docs/validation.md) — test matrix and evidence required for real execution acceptance.
+- [Automating discretionary trading](docs/discretionary-to-rules.md) — what must be clarified before implementing someone's subjective Fibonacci or price-action strategy.
 
-- H4 → M5 breakout and retest trading logic  
-- Configurable fixed lot or risk-based position sizing  
-- Trailing stop management  
-- **Smart news filter** that avoids trading around high-impact events  
-- Spread and terminal safety checks  
-- Dynamic lot calculation based on risk percentage  
+## Updated safety design
 
-## Strategy Overview
+- `EnableTrading=false` and `AllowRealAccount=false` by default. No orders by default.
+- Risk-based size enabled by default at 0.25%; broker-specific loss estimated with `OrderCalcProfit`, never forced to min lots when risk would be exceeded.
+- Daily equity and peak-equity budget check before attempting an order; terminal-local anchors persist across restarts. These are **not** centralized prop-firm drawdown controls.
+- Position and pending-order exclusion by symbol; own-MagicNumber filter on trailing-stop modifications.
+- Closed-bar EMA confirmation, ATR-unavailable fail closed, broker stop-distance check, and server retcode/deal inspection.
+- Sell code in the legacy EA remains disabled: the enhanced EA is **BUY-only**, not a complete bidirectional implementation.
 
-1. **Zone identification (H4)**  
-   The EA marks the first H4 candle of the current day and stores its high and low as the trading zone boundaries.
+## What is NOT verified
 
-2. **Breakout detection (M5)**  
-   On each new M5 candle:  
-   - A bullish breakout occurs when the candle closes above `zoneHigh`.  
-   - A bearish breakout occurs when the candle closes below `zoneLow`.  
-   When a breakout occurs, the EA starts waiting for a retest.
+- No Windows MetaEditor compilation of this change has been witnessed here.
+- No fresh MT5 Strategy Tester run has been generated for this change.
+- No audited live or out-of-sample PnL is claimed.
+- No automated broker execution, compliance certification, or profitability guarantee.
 
-3. **Retest entry**  
-   - If price returns to the broken zone within a specified window (`MaxWaitSeconds`):  
-     - **Buy** on bullish retest → SL = breakout candle low, TP = 1.5 × risk distance.  
-     - **Sell** on bearish retest → SL = breakout candle high, TP = 1.5 × risk distance.  
-   - Uses either a fixed lot (`Lots`) or a risk-based lot (`UseRiskPercent`, `RiskPercent`).
+**Research process:** define chart examples -> specify objective conditions -> identify invalidations -> implement EA -> compile -> real-tick tester -> OOS/holdout -> demo execution -> compare costs, drawdowns, and stability.
 
-4. **Trade management and protection**  
-   - Trailing stop control (`UseTrailingStop`, `TrailingStart`, `TrailingStep`).  
-   - Spread and trade-permission checks (`MaxSpreadPoints`, `TERMINAL_TRADE_ALLOWED`).  
-   - **Built-in news filter**: the EA checks the MetaTrader 5 economic calendar (`CalendarValueHistory`) and automatically avoids opening new trades within the defined window around **high-impact news events** for a selected currency (`NewsFilterCurrency`, `NewsFilterMinutes`).  
-   - This filter helps prevent entries during volatile periods and improves stability during major market announcements.
+## Run tests
 
+The CI check is intentionally **static source guardrails and Python research logic**, not a substitute for MetaEditor.
 
-## Input Parameters
+    python -m unittest discover -s tests -v
 
-| Parameter | Description | Default |
-|------------|-------------|----------|
-| `Lots` | Fixed lot size per trade | 0.01 |
-| `UseRiskPercent` | Enable dynamic lot sizing by risk | false |
-| `RiskPercent` | Percent of balance risked per trade | 1.0 |
-| `MaxWaitSeconds` | Maximum time allowed for retest | 86400 |
-| `UseTrailingStop` | Enable trailing stop | true |
-| `TrailingStart` | Profit (points) before trailing begins | 200 |
-| `TrailingStep` | Distance (points) of trailing stop | 100 |
-| `UseNewsFilter` | Enable high-impact news filter | true |
-| `NewsFilterMinutes` | Minutes before/after news to avoid trading | 30 |
-| `MagicNumber` | Unique identifier for EA positions | 202503 |
+See [docs/validation.md](docs/validation.md) for actual MT5 testing instructions.
 
----
-
-## Requirements
-
-- MetaTrader 5 platform  
-- Broker supporting XAUUSD (gold) trading  
-- MQL5 environment (MetaEditor)  
-- Historical data for backtesting  
-
----
-
-## Installation
-
-1. Open **MetaEditor** → *File → Open Data Folder*  
-2. Copy the `.mq5` file into `MQL5/Experts/`  
-3. Compile the EA  
-4. In MetaTrader 5, open *Navigator → Expert Advisors*  
-5. Attach the EA to a **XAUUSD** chart  
-6. Adjust input parameters as needed  
-
----
-## Backtest
-**Symbol:** XAUUSD  
-**Timeframe:** M5  
-**Period:** Jan 2022 – Oct 2025  
-**Model:** Every tick (MetaTrader 5 Strategy Tester)
-
-<img width="987" height="384" alt="image" src="https://github.com/user-attachments/assets/f3ed384a-65d7-4a4b-b851-921dcd3191f6" />
-<img width="967" height="372" alt="image" src="https://github.com/user-attachments/assets/d69a254e-9c1a-4636-b7c1-6c1996cba90e" />
-<img width="1023" height="547" alt="image" src="https://github.com/user-attachments/assets/eb485143-f264-4e0f-8300-f045a4ad12e3" />
-
-
-
-This backtest covers almost three years of market data, including different volatility phases in gold.  
-The EA demonstrates consistent trade execution, controlled drawdown, and stable risk-adjusted returns under the default settings.
-
-
-
-### Notes
-- Default parameters were used unless otherwise stated.  
-- The test includes realistic spreads and commissions.  
-- Results are for research and educational purposes only and do not guarantee future performance.
-
-
-
-
+Attribution in the original source header and commit history is preserved. © 2026 BoltIQ research additions.
