@@ -27,6 +27,12 @@ This is a public **implementation portfolio**, not an audited performance track 
 
 **Research process:** define chart examples -> specify objective conditions -> identify invalidations -> implement EA -> compile -> real-tick tester -> OOS/holdout -> demo execution -> compare costs, drawdowns, and stability.
 
+## Reproducible execution QA example
+
+If you are assessing an MT5 EA for order rejections, risk sizing, restart/reconnect handling or broker-specific behavior, start with the [public five-case acceptance matrix](docs/mt5-execution-risk-qa-sample.md). The matrix is explicitly **synthetic / NOT RUN**; it is a practical requirements template, not a claimed audit result.
+
+For one authorized build and one reproducible defect, [request a scoped $149 independent MT5 execution/risk diagnostic](https://boltiqmarkets.com/services/mt5-engineering#diagnostic). All inquiries use the site's consent-based written intake; no live account access or purchase is required. Marketplace-origin projects must remain on their respective platforms.
+
 ## Run tests
 
 The CI check is intentionally **static source guardrails and Python research logic**, not a substitute for MetaEditor.
